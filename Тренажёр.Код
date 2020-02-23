@@ -1,0 +1,368 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
+public class GameEvents : MonoBehaviour
+{
+    public int sceneId = -1;
+    public NodeScenes[] scenes;
+    public NodeScenes[] markedObj;
+    public SceneNode[] salute;
+    public bool needRestart = false;
+    public int scene0if = 0;
+    public bool airValveNeedCl = false;
+    public Text text;
+    public float timer = 0;
+    public GameObject gameOverPan;
+    public GameObject textClearDev;
+    private string task12 = "Откройте трубопровод ЗД ведущий к подземной ёмкости и подсоедините ёмкость с азотом.";
+    private string task13 = "Подождите, идёт продувка трубопровода (10 секунд).";
+    private string task14 = "Закройте трубопровод ведущий к подземной ёмкости и отсоедините ёмкость с азотом.";
+    private string task21 = "Откройте байонетный затвор и запасуйте очистное устройство, затем закройте баойнетный затвор.";
+    private string task31 = "Перекройте задвижку ЗД2.";
+    private string task32 = "Откройте воздушники Г1 и Г2.";
+    private string task33 = "Подождите, идёт вытеснение воздуха из трубопровода (6 секунд).";
+    private string task34 = "Закройте воздушники, иначе через них произойдёт фонтанирование нефти (10 секунд).";
+    private string task35 = "Откройте задвижку ЗД3.";
+    private string task41 = "Откройте задвижку ЗД1.";
+    private string task51 = "Очистное устройство прошло по трубопроводу, закройте задвижку ЗД3.";
+    private string task52 = "Закройте задвижку ЗД1.";
+    private string task53 = "Откройте задвижку ЗД2.";
+    private string task61 = "Поздравляю, вы запустили очистное устройство! Если хотите начать заново, нажмите R.";
+    private string error11 = "Для начала выполните продувку.";
+    private string error21 = "Сначало запасуйте очистное устройство.";
+    private string error31 = "Вы не перекрыли задвижку ЗД2.";
+    private string error32 = "Вы не открыли воздушники Г1 и Г2.";
+    private string error33 = "Вы не открыли задвижку ЗД3.";
+    private string error34 = "Вы не перекрыли воздушники Г1 и Г2.";
+    private string error35 = "Произошло фонтанирование нефти через воздушники.";
+    private string error36 = "Сначало вытесните воздух.";
+    private string error41 = "Вы не открыли задвижку ЗД1.";
+    private string error51 = "Сначало перекройте задвижку ЗД3.";
+    private string error52 = "Вы не перекрыли задвижку ЗД1.";
+    private string error53 = "Вы не открыли задвижку ЗД2.";
+    private string error = "!!!";
+
+    void Update()
+    {
+        if (sceneId == -1) changeScene();
+        if (sceneId == 5)
+        {
+            letsParty();
+            needRestart = false;
+        }
+        if (Input.GetKey(KeyCode.Escape)) Application.Quit();
+        if (!needRestart || sceneId == 5)
+        {
+            for (int i = 0; i < scenes.Length; i++)
+            {
+                if (i == sceneId) continue;
+                if (sceneId == 2 || sceneId == 3 || sceneId == 4)
+                {
+                    for (int j = 0; j < scenes[i].scene.Length; j++)
+                    {
+                        if (sceneId == 2)
+                        {
+                            if (i == 4)
+                            {
+                                if (j == 0 || j == 2) continue;
+                            }
+                        }
+                        else if (sceneId == 3)
+                        {
+                            if (i == 4)
+                            {
+                                if (j == 1) continue;
+                            }
+                        }
+                        else if (sceneId == 4)
+                        {
+                            if (i == 2)
+                            {
+                                if (j == 0 || j == 3) continue;
+                            }
+                            else if (i == 3)
+                            {
+                                if (j == 0) continue;
+                            }
+                        }
+                        if (scenes[i].scene[j].sceneObj.GetComponent<Communicate>().hasCommun())
+                        {
+                            needRestart = true;
+                        }
+                    }
+                }
+                else
+                {
+                    for (int j = 0; j < scenes[i].scene.Length; j++)
+                    {
+                        if (scenes[i].scene[j].sceneObj.GetComponent<Communicate>().hasCommun())
+                        {
+                            needRestart = true;
+                            Debug.Log("LOL");
+                        }
+                    }
+                }
+            }
+            if (sceneId == 0)
+            {
+                if (scene0If()) changeScene();
+            }
+            if (sceneId == 1)
+            {
+                if (scene1If()) changeScene();
+            }
+            if (sceneId == 2)
+            {
+                if (scene2If()) changeScene();
+            }
+            if (sceneId == 3)
+            {
+                if (scene3If()) changeScene();
+            }
+            if (sceneId == 4)
+            {
+                if (scene4If()) changeScene();
+            }
+            if (sceneId == 5)
+            {
+                text.text = task61;
+                if (Input.GetKey(KeyCode.R)) SceneManager.LoadScene("SampleScene");
+            }
+        }
+        if (needRestart && sceneId != 5)
+        {
+            GetComponent<AudioSource>().enabled = false;
+            gameOverPan.SetActive(true);
+            if (Input.GetKey(KeyCode.R)) SceneManager.LoadScene("SampleScene");
+            text.text = error;
+        }
+    }
+    void changeScene()
+    {
+        sceneId++;
+        for (int i = 0; i < scenes.Length; i++)
+        {
+            for (int j = 0; j < scenes[i].scene.Length; j++)
+            {
+                scenes[i].scene[j].sceneObj.GetComponent<Communicate>().resetCommun();
+            }
+        }
+        for (int i = 0; i < markedObj.Length; i++)
+        {
+            for (int j = 0; j < markedObj[i].scene.Length; j++)
+            {
+                markedObj[i].scene[j].sceneObj.GetComponent<ParticleSystem>().Clear();
+                markedObj[i].scene[j].sceneObj.GetComponent<ParticleSystem>().Stop();
+            }
+        }
+        for (int j = 0; j < markedObj[sceneId].scene.Length; j++)
+        {
+            markedObj[sceneId].scene[j].sceneObj.GetComponent<ParticleSystem>().Play();
+        }
+        for (int i = 0; i < salute.Length; i++)
+        {
+            salute[i].sceneObj.GetComponent<ParticleSystem>().Clear();
+            salute[i].sceneObj.GetComponent<ParticleSystem>().Pause();
+        }   
+        timer = 0;
+        error = "!!!";
+    }
+    void letsParty()
+    {
+        for (int i = 0; i < salute.Length; i++)
+        {
+            salute[i].sceneObj.GetComponent<ParticleSystem>().Play();
+        }
+    }
+    bool scene0If()
+    {
+        error = error11;
+        if (scene0if == 0)
+        {
+            text.text = task12;
+            scene0if = 1;
+        }
+        if (scene0if == 1)
+        {
+            if (!scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun() || !scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun())
+            {
+                timer = 0;
+                scene0if = 0;
+            }
+            if (scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun() && scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun())
+            {
+                text.text = task13;
+                timer += Time.deltaTime;
+                if (timer >= 10) scene0if = 2;
+            }
+        }
+        if (scene0if == 2)
+        {
+            text.text = task14;
+            if (!scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun()) scene0if = 3;
+        }
+        if (scene0if == 3)
+        {
+            if (!scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun() && !scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun()) scene0if = 4;
+        }
+        if (scene0if == 4) return true;
+ 
+        return false;
+    }
+    bool scene1If()
+    {
+        error = error21;
+        text.text = task21;
+        if (scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun())
+        {
+            scenes[sceneId].scene[1].sceneObj.GetComponent<ClearDevControl>().setCanComTrue();
+        }
+        else
+        {
+            scenes[sceneId].scene[1].sceneObj.GetComponent<ClearDevControl>().setCanComFalse();
+        }
+        if (scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun())
+        {
+            textClearDev.transform.position = new Vector3(-100f, -100f, -100f);
+            if (!scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun()) return true;
+        }
+        return false;
+    }
+    bool scene2If()
+    {
+        if (!airValveNeedCl)
+        {
+            if (!scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun())
+            {
+                text.text = task31;
+                error = error31;
+            }
+            else
+            {
+                text.text = task32;
+                error = error32;
+            }
+            if (scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun() || scenes[sceneId].scene[2].sceneObj.GetComponent<Communicate>().hasCommun())
+            {
+                if (!scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun())
+                {
+                    needRestart = true;
+                    error = error31;
+                    return false;
+                }
+                else if (scenes[sceneId].scene[3].sceneObj.GetComponent<Communicate>().hasCommun())
+                {
+                    needRestart = true;
+                    error = error32;
+                    return false;
+                }
+                else if (scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun() && scenes[sceneId].scene[2].sceneObj.GetComponent<Communicate>().hasCommun())
+                {
+                    text.text = task33;
+                    error = error36;
+                    timer += Time.deltaTime;
+                    if (timer >= 6)
+                    {
+                        airValveNeedCl = true;
+                        timer = 0;
+                    }
+                }
+            }
+        }
+        else
+        {
+            text.text = task34;
+            if (scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun() || scenes[sceneId].scene[2].sceneObj.GetComponent<Communicate>().hasCommun())
+            {
+                Debug.Log("LOL");
+                error = error34;
+                if (scenes[sceneId].scene[3].sceneObj.GetComponent<Communicate>().hasCommun())
+                {
+                    needRestart = true;
+                    error = error34;
+                    return false;
+                }
+                timer += Time.deltaTime;
+                if (timer >= 10)
+                {
+                    needRestart = true;
+                    error = error35;
+                    return false;
+                }
+            }
+            else
+            {
+                Debug.Log("YES");
+                if (!scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun())
+                {
+                    needRestart = true;
+                    error = error31;
+                    return false;
+                }
+                text.text = task35;
+                if (scenes[sceneId].scene[3].sceneObj.GetComponent<Communicate>().hasCommun())
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    bool scene3If()
+    {
+        text.text = task41;
+        error = error41;
+        if (scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun()) return true;
+        return false;
+    }
+    bool scene4If()
+    {
+        if (!scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun())
+        {
+            text.text = task51;
+            error = error51;
+        }
+        else
+        {
+            text.text = task52;
+            error = error52;
+        }
+        if (scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun())
+        {
+            if (!scenes[sceneId].scene[0].sceneObj.GetComponent<Communicate>().hasCommun())
+            {
+                needRestart = true;
+                return false;
+            }
+            text.text = task53;
+            error = error53;
+        }
+        if (scenes[sceneId].scene[2].sceneObj.GetComponent<Communicate>().hasCommun())
+        {
+            if (!scenes[sceneId].scene[1].sceneObj.GetComponent<Communicate>().hasCommun())
+            {
+                needRestart = true;
+                return false;
+            }
+            else return true;
+        }
+        return false;
+    }
+}
+
+[System.Serializable]
+public class SceneNode
+{
+    public GameObject sceneObj;
+}
+[System.Serializable]
+public class NodeScenes
+{
+    public SceneNode[] scene;
+}
+public class Texts
+{
+}
